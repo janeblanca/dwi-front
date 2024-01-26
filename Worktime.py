@@ -49,8 +49,3 @@ class WorktimeSection:
         )
         self.painter.drawText(122, 314, 450, 270, Qt.AlignLeft, "in your work.")
 
-        font_counter = QFont()
-        font_counter.setPointSize(10)
-        self.painter.setFont(font_counter)
-        self.painter.setPen(QColor("#303030"))
-        self.painter.drawText(140, 200, 150, 30, Qt.AlignLeft, "Total Work Time:")
