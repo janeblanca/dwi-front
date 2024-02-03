@@ -3,8 +3,6 @@ from PyQt5.QtCore import Qt, QRect
 from PyQt5.QtWidgets import QWidget, QApplication, QLineEdit, QScrollArea, QVBoxLayout, QMessageBox
 from PyQt5.QtGui import QPainter, QColor, QPen, QFont, QPixmap, QIntValidator
 from plyer import notification
-from gtts import gTTS
-import os
 
 from Worktime import WorktimeSection
 from Breaktime import BreaktimeSection
@@ -188,6 +186,7 @@ class MainWindow(QWidget):
         self.audio.audio_container(painter)
         self.audio.audio_holder(painter)
 
+
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
             click_pos = event.pos()
@@ -201,7 +200,6 @@ class MainWindow(QWidget):
                     print("Camera access allowed")
                     self.camera.cam_placeholder = False
                     self.update()
-                    self.button_clicked = True
                 else:
                     self.camera.cam_placeholder = True
                     print("Camera access denied.")
@@ -274,6 +272,7 @@ class MainWindow(QWidget):
         self.notification_scroll_area.verticalScrollBar().setValue(
             self.notification_scroll_area.verticalScrollBar().maximum()
         )
+
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

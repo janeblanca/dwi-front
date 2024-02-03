@@ -2,6 +2,7 @@ from PyQt5.QtGui import QColor, QPen, QFont, QPixmap, QImage
 from PyQt5.QtCore import Qt, QRect
 import cv2
 import numpy as np
+from plyer import notification
 from FeatureExtraction import HandLandmarksDetector
 
 
@@ -10,7 +11,6 @@ class Camera:
         self.parent = parent
         self.camera = cv2.VideoCapture(1)
         self.cam_placeholder = True
-
 
     def cam_container(self, painter):
         painter.setPen(QPen(Qt.white, 0.5))
@@ -28,11 +28,15 @@ class Camera:
             landmarks_detector = HandLandmarksDetector()
             frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             landmarks = landmarks_detector.extract_landmarks(frame)
-
-            # Reshaping the extracted landmarks to fit into the model
             landmarks_arr = np.array(landmarks)
-            print(landmarks_arr.shape)
-            # reshaped_landmarks = landmarks_arr.reshape((1, 1, landmarks_arr.shape[0]))
+
+            if landmarks_arr.shape != (126, ):
+                self.show_notification("Don't Wrist It!", "Align both of your hands on the camera")
+                print("Align both of your hands on the camera.")
+            else:
+                print(landmarks_arr.shape)
+                # Reshaping the extracted landmarks to fit into the model
+                reshaped_landmarks = landmarks_arr.reshape((1, 1, landmarks_arr.shape[0]))
 
             frame_with_landmarks = cv2.cvtColor(frame_rgb, cv2.COLOR_BGR2RGB)
             h, w, ch = frame_with_landmarks.shape
@@ -56,3 +60,13 @@ class Camera:
 
     def release_camera(self):
         self.camera.release()
+
+    def show_notification(self, title, message):
+        notification.notify(
+            title=title,
+            message=message,
+            app_name="Don't Wrist It",
+            timeout=10
+        )
+
+
