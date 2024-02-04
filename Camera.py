@@ -1,72 +1,46 @@
-from PyQt5.QtGui import QColor, QPen, QFont, QPixmap, QImage
-from PyQt5.QtCore import Qt, QRect
 import cv2
+import threading
+from PyQt5.QtCore import pyqtSignal, QObject, QSize
+from PyQt5.QtGui import QImage
 import numpy as np
-from plyer import notification
 from FeatureExtraction import HandLandmarksDetector
 
 
-class Camera:
-    def __init__(self, parent):
-        self.parent = parent
+class Camera(QObject):
+    image_data = pyqtSignal(QImage)
+
+    def __init__(self):
+        super().__init__()
         self.camera = cv2.VideoCapture(1)
-        self.cam_placeholder = True
+        self.camera_thread = threading.Thread(target=self.stream, daemon=True)
+        self.running = False
 
-    def cam_container(self, painter):
-        painter.setPen(QPen(Qt.white, 0.5))
-        color = QColor("#3A606E")
-        color.setAlpha(100)
-        painter.setBrush(color)
-        camera_square = QRect(self.parent.width() - 420, 330, 390, 350)
-        radius = 7
-        painter.drawRoundedRect(camera_square, radius, radius)
 
-    def cam_draw(self, painter):
-        ret, frame = self.camera.read()
-        if ret:
-            # MediaPipe
-            landmarks_detector = HandLandmarksDetector()
-            frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            landmarks = landmarks_detector.extract_landmarks(frame)
-            landmarks_arr = np.array(landmarks)
+    def start(self):
+        self.running = True
+        self.camera_thread.start()
 
-            if landmarks_arr.shape != (126, ):
-                self.show_notification("Don't Wrist It!", "Align both of your hands on the camera")
-                print("Align both of your hands on the camera.")
-            else:
+    def stop(self):
+        self.running = False
+        self.camera_thread.join()
+
+    def stream(self):
+        while self.running:
+            ret, frame = self.camera.read()
+            if ret:
+                extract_landmarks = HandLandmarksDetector()
+                rgb_image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                landmarks = extract_landmarks.extract_landmarks(frame)
+                # converting the landmarks into array of values
+                landmarks_arr = np.array(landmarks)
                 print(landmarks_arr.shape)
-                # Reshaping the extracted landmarks to fit into the model
-                reshaped_landmarks = landmarks_arr.reshape((1, 1, landmarks_arr.shape[0]))
 
-            frame_with_landmarks = cv2.cvtColor(frame_rgb, cv2.COLOR_BGR2RGB)
-            h, w, ch = frame_with_landmarks.shape
-            bytes_per_line = ch * w
-            landmarks_image = QImage(frame_rgb.data, w, h, bytes_per_line, QImage.Format_RGB888)
-            dest_rect = QRect(790, 370, 370, 270)
-            painter.drawImage(dest_rect, landmarks_image.scaled(dest_rect.size(), Qt.KeepAspectRatio))
+                h, w, ch = rgb_image.shape
+                bytes_per_line = ch * w
+                qt_image = QImage(rgb_image.data, w, h, bytes_per_line, QImage.Format_RGB888)
+                self.image_data.emit(qt_image)
 
-    def cam_holder(self, painter):
-        image_cam = QPixmap("./images/cam.png")
-        image_cam_rect = QRect(self.parent.width() - 380, 380, 300, 210)
-        painter.drawPixmap(image_cam_rect, image_cam)
-        click_font = QFont()
-        click_font.setPointSize(9)
-        painter.setFont(click_font)
-        painter.setPen(QColor("#ffffff"))
-        painter.drawText(self.parent.width() - 445, 480, 450, 270, Qt.AlignCenter, "Click to set-up your camera")
-
-    def update(self):
-        self.parent.update()
-
-    def release_camera(self):
-        self.camera.release()
-
-    def show_notification(self, title, message):
-        notification.notify(
-            title=title,
-            message=message,
-            app_name="Don't Wrist It",
-            timeout=10
-        )
-
-
+    def get_frame_size(self):
+        width = int(self.camera.get(cv2.CAP_PROP_FRAME_WIDTH))
+        height = int(self.camera.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        return QSize(width, height)

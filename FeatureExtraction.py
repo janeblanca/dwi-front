@@ -36,34 +36,5 @@ class HandLandmarksDetector:
     def release_resources(self):
         self.mp_hands.close()
 
-    # def detect_hand_landmarks(self):
-    #     cap = cv2.VideoCapture(0)
-    #
-    #     while cap.isOpened():
-    #         ret, frame = cap.read()
-    #         if not ret:
-    #             break
-    #
-    #         frame_with_landmarks = self.draw_landmarks(frame)
-    #         landmarks = self.extract_landmarks(frame)
-    #
-    #         landmarks_arr = np.array(landmarks)
-    #         reshaped_landmarks = landmarks_arr.reshape((1, 1, landmarks_arr.shape[0]))
-    #
-    #         print(landmarks_arr)
-    #         print(landmarks_arr.shape)
-    #         # Show the frame with landmarks
-    #         cv2.imshow('', frame_with_landmarks)
-    #
-    #         if cv2.waitKey(1) & 0xFF == ord('q'):
-    #             break
-    #
-    #     cap.release()
-    #     cv2.destroyAllWindows()
-    #     self.hands.close()
-
 if __name__ == "__main__":
     detector = HandLandmarksDetector()
-    # Use detector methods as needed
-    # When done, release resources using detector.release_resources()
-    # detector.detect_hand_landmarks()
