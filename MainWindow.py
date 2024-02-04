@@ -1,6 +1,6 @@
 import sys
 from PyQt5.QtCore import Qt, QRect
-from PyQt5.QtWidgets import QWidget, QApplication, QLineEdit, QScrollArea, QVBoxLayout, QMessageBox
+from PyQt5.QtWidgets import QWidget, QApplication, QLineEdit, QScrollArea, QVBoxLayout, QMessageBox, QLabel
 from PyQt5.QtGui import QPainter, QColor, QPen, QFont, QPixmap, QIntValidator
 from plyer import notification
 
@@ -11,9 +11,9 @@ from WristPosition import WristPositionSection
 from ReminderSection import ReminderSection
 from TimeInput import InputTime
 from ReminderMessage import ReminderWidget
-from Camera import Camera
-from CameraPermission import CamPermission
 from Audio import Audio
+from Camera import Camera
+
 
 class MainWindow(QWidget):
     def __init__(self):
@@ -26,12 +26,15 @@ class MainWindow(QWidget):
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowMaximizeButtonHint)
 
         # Camera
-        self.show_camera = False
-        self.camera = Camera(self)
-        self.timer = self.startTimer(1000)
+        self.camera_label = QLabel(self)
+        self.camera_label.setGeometry(self.width() - 425, 355, 400, 300)
+        self.camera_label.setStyleSheet("background-color: black;")
 
-        # Clicked camera button
-        self.button_clicked = False
+        self.camera = Camera()
+        self.camera.image_data.connect(self.update_camera_image)
+
+        # start camera
+        self.camera.start()
 
         # Break Time Input
         self.user_input_break = QLineEdit(self)
@@ -176,11 +179,11 @@ class MainWindow(QWidget):
         painter.setPen(QColor("#ffffff"))
         painter.drawText(self.width() - 430, 305, 450, self.height(), Qt.AlignLeft, "Setting-up your Camera")
 
-        self.camera.cam_container(painter)
-        if self.camera.cam_placeholder:
-            self.camera.cam_holder(painter)
-        else:
-            self.camera.cam_draw(painter)
+        rect = QRect(self.width() - 430, 330, 410, 350)
+        painter.setPen(QPen(QColor("#FFFFFF"), 1))
+        painter.setBrush(QColor("#AAAE8E"))
+        painter.drawRoundedRect(rect, 5, 5)
+
 
         # Audio
         self.audio.audio_container(painter)
@@ -190,19 +193,7 @@ class MainWindow(QWidget):
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
             click_pos = event.pos()
-            camera_container = QRect(self.width() - 420, 330, 390, 350)
-            if camera_container.contains(click_pos):
-                # Call CamPermission class to display Message Box
-                message_box = CamPermission()
-                result = message_box.exec_()
-                # Click "Allow" or "Don't Allow"
-                if result == QMessageBox.Yes:
-                    print("Camera access allowed")
-                    self.camera.cam_placeholder = False
-                    self.update()
-                else:
-                    self.camera.cam_placeholder = True
-                    print("Camera access denied.")
+
 
             audio_pane = QRect(105, self.height() - 115, self.width() - 577, 85)
             if audio_pane.contains(click_pos):
@@ -213,7 +204,6 @@ class MainWindow(QWidget):
 
     def timerEvent(self, event):
         if event.timerId() == self.timer:
-            self.camera.update()
             if self.break_interval_active:
                 if self.break_interval > 0:
                     self.break_interval -= 1
@@ -236,7 +226,7 @@ class MainWindow(QWidget):
             self.update()
 
     def closeEvent(self, event):
-        self.camera.release_camera()
+        self.camera.stop()
         event.accept()
 
     def set_break_time(self):
@@ -272,6 +262,11 @@ class MainWindow(QWidget):
         self.notification_scroll_area.verticalScrollBar().setValue(
             self.notification_scroll_area.verticalScrollBar().maximum()
         )
+
+    def update_camera_image(self, image):
+        pixmap = QPixmap.fromImage(image)
+        pixmap = pixmap.scaled(400, 300, Qt.KeepAspectRatio)
+        self.camera_label.setPixmap(pixmap)
 
 
 if __name__ == '__main__':
