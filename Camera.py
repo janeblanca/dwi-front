@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
-from PyQt5.QtCore import pyqtSignal, QObject, QThread, QSize, QRect, Qt
-from PyQt5.QtGui import QImage, QFont, QPixmap, QColor
+from PyQt5.QtCore import pyqtSignal, QObject, QThread, QSize
+from PyQt5.QtGui import QImage
 # from plyer import notification
 from FeatureExtraction import HandLandmarksDetector
 
@@ -12,8 +12,10 @@ class Camera(QObject):
     def __init__(self):
         super().__init__()
         self.camera = cv2.VideoCapture(1)
+        # threading
         self.camera_thread = QThread()
         self.moveToThread(self.camera_thread)
+        # connect to stream function for displaying live video
         self.camera_thread.started.connect(self.stream)
         # initializing mediapipe
         self.landmarks_detector = HandLandmarksDetector()
@@ -35,14 +37,16 @@ class Camera(QObject):
                 rgb_image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                 # extracting landmarks from mediapipe
                 landmarks = self.landmarks_detector.extract_landmarks(frame)
+                # converting into array for reshaping before feeding into the model
                 landmarks_arr = np.array(landmarks)
-                # print(landmarks_arr.shape)
 
+                # apply error handling
                 if landmarks_arr.shape != (126, ):
                     print("Align both hands in the camera")
                 else:
                     print(landmarks_arr.shape)
 
+                # receive and process image data for display
                 h, w, ch = rgb_image.shape
                 bytes_per_line = ch * w
                 qt_image = QImage(rgb_image.data, w, h, bytes_per_line, QImage.Format_RGB888)
