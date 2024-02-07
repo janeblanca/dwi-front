@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 from PyQt5.QtCore import pyqtSignal, QObject, QThread, QSize, QRect, Qt
 from PyQt5.QtGui import QImage, QFont, QPixmap, QColor
-from plyer import notification
+# from plyer import notification
 from FeatureExtraction import HandLandmarksDetector
 
 
@@ -15,6 +15,7 @@ class Camera(QObject):
         self.camera_thread = QThread()
         self.moveToThread(self.camera_thread)
         self.camera_thread.started.connect(self.stream)
+        # initializing mediapipe
         self.landmarks_detector = HandLandmarksDetector()
         self.running = False
 
@@ -32,13 +33,13 @@ class Camera(QObject):
             ret, frame = self.camera.read()
             if ret:
                 rgb_image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                # extracting landmarks from mediapipe
                 landmarks = self.landmarks_detector.extract_landmarks(frame)
                 landmarks_arr = np.array(landmarks)
                 # print(landmarks_arr.shape)
 
                 if landmarks_arr.shape != (126, ):
                     print("Align both hands in the camera")
-                    self.show_notification("Align both hands in the camera", " ")
                 else:
                     print(landmarks_arr.shape)
 
@@ -62,10 +63,10 @@ class Camera(QObject):
     #     painter.setPen(QColor("#ffffff"))
     #     painter.drawText(parent.width() - 445, 480, 450, 270, Qt.AlignCenter, "Click to set-up your camera")
 
-    def show_notification(self, title, message):
-        notification.notify(
-            title=title,
-            message=message,
-            app_name="Don't Wrist It",
-            timeout=10
-        )
+    # def show_notification(self, title, message):
+    #     notification.notify(
+    #         title=title,
+    #         message=message,
+    #         app_name="Don't Wrist It",
+    #         timeout=10
+    #     )
