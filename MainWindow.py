@@ -36,6 +36,10 @@ class MainWindow(QWidget):
         # start camera
         self.camera.start()
 
+        # calling the class for the time inputs
+        self.break_handler = InputTime(self)
+        self.timer = self.startTimer(1000)
+
         # Break Time Input
         self.user_input_break = QLineEdit(self)
         self.user_input_break.setGeometry(355, 195, 50, 30)
@@ -49,7 +53,6 @@ class MainWindow(QWidget):
             "background-color: #f3f1ec; border: none; color: #303030; font-size: 14px;")
         self.user_input_interval.setValidator(QIntValidator())
 
-        self.break_handler = InputTime(self)
 
         self.user_input_break.returnPressed.connect(self.validate_inputs)
         self.user_input_interval.returnPressed.connect(self.validate_inputs)
@@ -216,6 +219,7 @@ class MainWindow(QWidget):
             else:
                 if self.break_time > 0:
                     self.break_time -= 1
+                    print(self.break_time)
 
                     if self.break_time == 0:
                         self.break_interval_active = True
@@ -223,7 +227,7 @@ class MainWindow(QWidget):
                         self.break_interval = self.original_break_interval
                         self.show_notification("Break Time Over", "Back to work!")
 
-            self.update()
+        self.update()
 
     def closeEvent(self, event):
         # self.camera.stop()
