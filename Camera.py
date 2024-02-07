@@ -1,8 +1,7 @@
 import cv2
-import threading
-from PyQt5.QtCore import pyqtSignal, QObject, QSize
-from PyQt5.QtGui import QImage
 import numpy as np
+from PyQt5.QtCore import pyqtSignal, QObject, QThread, QSize, QRect, Qt
+from PyQt5.QtGui import QImage, QFont, QPixmap, QColor
 from FeatureExtraction import HandLandmarksDetector
 
 
@@ -12,9 +11,11 @@ class Camera(QObject):
     def __init__(self):
         super().__init__()
         self.camera = cv2.VideoCapture(1)
-        self.camera_thread = threading.Thread(target=self.stream, daemon=True)
+        self.camera_thread = QThread()
+        self.moveToThread(self.camera_thread)
+        self.camera_thread.started.connect(self.stream)
+        self.landmarks_detector = HandLandmarksDetector()
         self.running = False
-
 
     def start(self):
         self.running = True
@@ -22,16 +23,15 @@ class Camera(QObject):
 
     def stop(self):
         self.running = False
-        self.camera_thread.join()
+        self.camera_thread.quit()
+        self.camera_thread.wait()
 
     def stream(self):
         while self.running:
             ret, frame = self.camera.read()
             if ret:
-                extract_landmarks = HandLandmarksDetector()
                 rgb_image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                landmarks = extract_landmarks.extract_landmarks(frame)
-                # converting the landmarks into array of values
+                landmarks = self.landmarks_detector.extract_landmarks(frame)
                 landmarks_arr = np.array(landmarks)
                 print(landmarks_arr.shape)
 
@@ -44,3 +44,13 @@ class Camera(QObject):
         width = int(self.camera.get(cv2.CAP_PROP_FRAME_WIDTH))
         height = int(self.camera.get(cv2.CAP_PROP_FRAME_HEIGHT))
         return QSize(width, height)
+
+    def cam_holder(self, painter, parent):
+        image_cam = QPixmap("./src/cam.png")
+        image_cam_rect = QRect(parent.width() - 380, 380, 300, 210)
+        painter.drawPixmap(image_cam_rect, image_cam)
+        click_font = QFont()
+        click_font.setPointSize(9)
+        painter.setFont(click_font)
+        painter.setPen(QColor("#ffffff"))
+        painter.drawText(parent.width() - 445, 480, 450, 270, Qt.AlignCenter, "Click to set-up your camera")

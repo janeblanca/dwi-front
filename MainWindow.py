@@ -28,7 +28,7 @@ class MainWindow(QWidget):
         # Camera
         self.camera_label = QLabel(self)
         self.camera_label.setGeometry(self.width() - 425, 355, 400, 300)
-        self.camera_label.setStyleSheet("background-color: black;")
+        self.camera_label.setStyleSheet("background-color: #AAAE8E;")
 
         self.camera = Camera()
         self.camera.image_data.connect(self.update_camera_image)
@@ -106,9 +106,11 @@ class MainWindow(QWidget):
         painter.drawRect(self.width() - 450, 0, 450, self.height())
 
         # Logo
-        image_logo = QPixmap("./images/logo.png")
-        image_logo_x = self.width() - 450 + (450 - image_logo.width()) // 2
-        painter.drawPixmap(image_logo_x, -70, image_logo.width(), image_logo.height(), image_logo)
+        if not hasattr(self, 'logo_pixmap'):
+            self.logo_pixmap = QPixmap("./images/logo.png")
+
+        image_logo_x = self.width() - 450 + (450 - self.logo_pixmap.width()) // 2
+        painter.drawPixmap(image_logo_x, -70, self.logo_pixmap)
 
         # --- Don't Wrist It Title---
         font_title = QFont()
@@ -184,7 +186,6 @@ class MainWindow(QWidget):
         painter.setBrush(QColor("#AAAE8E"))
         painter.drawRoundedRect(rect, 5, 5)
 
-
         # Audio
         self.audio.audio_container(painter)
         self.audio.audio_holder(painter)
@@ -193,7 +194,6 @@ class MainWindow(QWidget):
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
             click_pos = event.pos()
-
 
             audio_pane = QRect(105, self.height() - 115, self.width() - 577, 85)
             if audio_pane.contains(click_pos):
@@ -226,7 +226,7 @@ class MainWindow(QWidget):
             self.update()
 
     def closeEvent(self, event):
-        self.camera.stop()
+        # self.camera.stop()
         event.accept()
 
     def set_break_time(self):
@@ -265,8 +265,7 @@ class MainWindow(QWidget):
 
     def update_camera_image(self, image):
         pixmap = QPixmap.fromImage(image)
-        pixmap = pixmap.scaled(400, 300, Qt.KeepAspectRatio)
-        self.camera_label.setPixmap(pixmap)
+        self.camera_label.setPixmap(pixmap.scaled(self.camera_label.size(), Qt.KeepAspectRatio))
 
 
 if __name__ == '__main__':
