@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+import tensorflow as tf
 from PyQt5.QtCore import pyqtSignal, QObject, QThread, QSize
 from PyQt5.QtGui import QImage
 # from plyer import notification
@@ -19,6 +20,8 @@ class Camera(QObject):
         self.camera_thread.started.connect(self.stream)
         # initializing mediapipe
         self.landmarks_detector = HandLandmarksDetector()
+        # initialize model
+        self.model = tf.keras.models.load_model('C:/Users/DeLL/Documents/new-dwi/model/lstm_1-new.h5')
         self.running = False
 
     def start(self):
@@ -45,6 +48,16 @@ class Camera(QObject):
                     print("Align both hands in the camera")
                 else:
                     print(landmarks_arr.shape)
+                    # reshape to fit the model
+                    reshape_landmarks = landmarks_arr.reshape(1, 1, landmarks.shape[0])
+                    # feed into the data into the model
+                    classify = self.model.predict(reshape_landmarks)
+
+                    # classifying
+                    if classify > 0.5:
+                        print("Correct position")
+                    else:
+                        print("Incorrect position")
 
                 # receive and process image data for display
                 h, w, ch = rgb_image.shape
