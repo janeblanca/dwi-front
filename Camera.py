@@ -1,10 +1,12 @@
 import cv2
 import numpy as np
-# import tensorflow as tf
+import tensorflow as tf
 from PyQt5.QtCore import pyqtSignal, QObject, QThread, QSize
 from PyQt5.QtGui import QImage
 # from plyer import notification
 from FeatureExtraction import HandLandmarksDetector
+# from Audio import Audio 
+from WristPosition import WristPositionSection
 
 
 class Camera(QObject):
@@ -21,8 +23,11 @@ class Camera(QObject):
         # initializing mediapipe
         self.landmarks_detector = HandLandmarksDetector()
         # initialize model
-        # self.model = tf.keras.models.load_model('C:/Users/DeLL/Documents/new-dwi/model/lstm_1-new.h5')
+        self.model = tf.keras.models.load_model('C:/Users/DeLL/OneDrive/Documents/dwi-latest/model/lstm_1-new.h5')
         self.running = False
+
+        # for audio classification 
+        # self.audio = Audio(self)
 
     def start(self):
         self.running = True
@@ -43,21 +48,25 @@ class Camera(QObject):
                 # converting into array for reshaping before feeding into the model
                 landmarks_arr = np.array(landmarks)
 
+
                 # apply error handling
                 if landmarks_arr.shape != (126, ):
                     print("Align both hands in the camera")
                 else:
-                    print(landmarks_arr.shape)
+                    # print(landmarks_arr.shape)
                     # reshape to fit the model
-                    # reshape_landmarks = landmarks_arr.reshape(1, 1, landmarks.shape[0])
-                    # # feed into the data into the model
-                    # classify = self.model.predict(reshape_landmarks)
+                    reshape_landmarks = landmarks_arr.reshape(1, 1, landmarks_arr.shape[0])
+                    # feed into the data into the model
+                    classify = self.model.predict(reshape_landmarks)
 
-                    # # classifying
-                    # if classify > 0.5:
-                    #     print("Correct position")
-                    # else:
-                    #     print("Incorrect position")
+                    # classifying
+                    if classify > 0.5:
+                        print("Correct position")
+                    else:
+                        print("Incorrect position")
+                        wrist_position.incorrect()
+                        # self.audio.speak_text()
+                        
 
                 # receive and process image data for display
                 h, w, ch = rgb_image.shape
@@ -70,20 +79,6 @@ class Camera(QObject):
         height = int(self.camera.get(cv2.CAP_PROP_FRAME_HEIGHT))
         return QSize(width, height)
 
-    # def cam_holder(self, painter, parent):
-    #     image_cam = QPixmap("./src/cam.png")
-    #     image_cam_rect = QRect(parent.width() - 380, 380, 300, 210)
-    #     painter.drawPixmap(image_cam_rect, image_cam)
-    #     click_font = QFont()
-    #     click_font.setPointSize(9)
-    #     painter.setFont(click_font)
-    #     painter.setPen(QColor("#ffffff"))
-    #     painter.drawText(parent.width() - 445, 480, 450, 270, Qt.AlignCenter, "Click to set-up your camera")
-
-    # def show_notification(self, title, message):
-    #     notification.notify(
-    #         title=title,
-    #         message=message,
-    #         app_name="Don't Wrist It",
-    #         timeout=10
-    #     )
+    def wrist_position(self, painter):
+        self.wrist_position = WristPositionSection(painter, self.width(), self.height())
+        return self.wrist_position

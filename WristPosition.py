@@ -35,12 +35,6 @@ class WristPositionSection:
         self.painter.setPen(QColor("#303030"))
         self.painter.drawText(193, 388, 450, 270, Qt.AlignLeft, "Wrist Position")
 
-        font_title = QFont()
-        font_title.setPointSize(9)
-        self.painter.setFont(font_title)
-        self.painter.setPen(QColor("#303030"))
-        self.painter.drawText(180, 470, 450, 270, Qt.AlignLeft, "Correct")
-
         # Description of wrist position
         font_title = QFont()
         font_title.setPointSize(8)
@@ -48,3 +42,17 @@ class WristPositionSection:
         self.painter.setPen(QColor("#303030"))
         self.painter.drawText(122, 540, 450, 270, Qt.AlignLeft, "This section displays the")
         self.painter.drawText(122, 557, 450, 270, Qt.AlignLeft, "status of your wrist position")
+    
+    def correct(self):
+        font_title = QFont()
+        font_title.setPointSize(9)
+        self.painter.setFont(font_title)
+        self.painter.setPen(QColor("#303030"))
+        self.painter.drawText(180, 470, 450, 270, Qt.AlignLeft, "Correct")
+
+    def incorrect(self):
+        font_title = QFont()
+        font_title.setPointSize(9)
+        self.painter.setFont(font_title)
+        self.painter.setPen(QColor("#303030"))
+        self.painter.drawText(180, 470, 450, 270, Qt.AlignLeft, "Incorrect")
