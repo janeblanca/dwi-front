@@ -36,6 +36,10 @@ class MainWindow(QWidget):
         # start camera
         self.camera.start()
 
+        # Time Input
+        self.break_handler = InputTime(self)
+        self.timer = self.startTimer(1000)
+
         # Break Time Input
         self.user_input_break = QLineEdit(self)
         self.user_input_break.setGeometry(355, 195, 50, 30)
@@ -48,8 +52,6 @@ class MainWindow(QWidget):
         self.user_input_interval.setStyleSheet(
             "background-color: #f3f1ec; border: none; color: #303030; font-size: 14px;")
         self.user_input_interval.setValidator(QIntValidator())
-
-        self.break_handler = InputTime(self)
 
         self.user_input_break.returnPressed.connect(self.validate_inputs)
         self.user_input_interval.returnPressed.connect(self.validate_inputs)
