@@ -220,7 +220,6 @@ class MainWindow(QWidget):
             else:
                 if self.break_time > 0:
                     self.break_time -= 1
-                    print(self.break_time)
 
                     if self.break_time == 0:
                         self.break_interval_active = True
