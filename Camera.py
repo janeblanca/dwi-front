@@ -52,7 +52,7 @@ class Camera(QObject):
                     # reshape_landmarks = landmarks_arr.reshape(1, 1, landmarks.shape[0])
                     # # feed into the data into the model
                     # classify = self.model.predict(reshape_landmarks)
-                    #
+
                     # # classifying
                     # if classify > 0.5:
                     #     print("Correct position")
