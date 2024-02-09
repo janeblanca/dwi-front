@@ -1,6 +1,7 @@
 from PyQt5.QtGui import QColor, QPen, QFont, QPixmap
 from PyQt5.QtCore import Qt, QRect
 from gtts import gTTS
+import pygame 
 import os
 
 class Audio:
@@ -21,7 +22,24 @@ class Audio:
         text_to_speak = "Prolonged incorrect wrist position! Correct your position immediately."
         tts = gTTS(text=text_to_speak, lang='en')
         tts.save("audio.mp3")
-        os.system("start audio.mp3")
+       
+        # initialize pygame 
+        pygame.mixer.init()
+
+        print("Loading audio file...")
+        loaded = pygame.mixer.music.load("audio.mp3")
+        if loaded:
+            print("Audio file loaded successfully.")
+        else:
+            print("Failed to load audio file.")
+
+        # load the audio file
+        pygame.mixer.music.play()
+        # wait for the audio to finish playing
+        while pygame.mixer.music.get_busy():
+            pygame.time.Clock().tick(1)
+        # clean up resources
+        pygame.mixer.quit()
 
     def audio_holder(self, painter):
         # small square (box of audio icon)
