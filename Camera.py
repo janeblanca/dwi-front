@@ -6,7 +6,7 @@ from PyQt5.QtGui import QImage
 # from plyer import notification
 from FeatureExtraction import HandLandmarksDetector
 # from Audio import Audio 
-from WristPosition import WristPositionSection
+# from WristPosition import WristPositionSection
 
 
 class Camera(QObject):
@@ -23,7 +23,7 @@ class Camera(QObject):
         # initializing mediapipe
         self.landmarks_detector = HandLandmarksDetector()
         # initialize model
-        self.model = tf.keras.models.load_model('C:/Users/DeLL/OneDrive/Documents/dwi-latest/model/lstm_1-new.h5')
+        self.model = tf.keras.models.load_model('C:/Users/DeLL/OneDrive/Documents/dwi-latest/model/lstm_4-new.h5')
         self.running = False
 
         # for audio classification 
@@ -64,7 +64,6 @@ class Camera(QObject):
                         print("Correct position")
                     else:
                         print("Incorrect position")
-                        wrist_position.incorrect()
                         # self.audio.speak_text()
                         
 
@@ -78,7 +77,3 @@ class Camera(QObject):
         width = int(self.camera.get(cv2.CAP_PROP_FRAME_WIDTH))
         height = int(self.camera.get(cv2.CAP_PROP_FRAME_HEIGHT))
         return QSize(width, height)
-
-    def wrist_position(self, painter):
-        self.wrist_position = WristPositionSection(painter, self.width(), self.height())
-        return self.wrist_position
