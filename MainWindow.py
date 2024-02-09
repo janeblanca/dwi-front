@@ -1,6 +1,6 @@
 import sys
 from PyQt5.QtCore import Qt, QRect
-from PyQt5.QtWidgets import QWidget, QApplication, QLineEdit, QScrollArea, QVBoxLayout, QMessageBox, QLabel
+from PyQt5.QtWidgets import QWidget, QApplication, QLineEdit, QScrollArea, QVBoxLayout, QLabel
 from PyQt5.QtGui import QPainter, QColor, QPen, QFont, QPixmap, QIntValidator
 from plyer import notification
 
@@ -90,6 +90,7 @@ class MainWindow(QWidget):
 
         # Audio
         self.audio = Audio(self)
+
 
     def main_window(self):
         self.setWindowTitle("Don't Wrist It")
@@ -194,17 +195,14 @@ class MainWindow(QWidget):
         self.audio.audio_container(painter)
         self.audio.audio_holder(painter)
 
+    """
+        The mousePressEvent function can be 
+        used when selecting camera 
+    """
+    # def mousePressEvent(self, event):
+    #     if event.button() == Qt.LeftButton:
+    #         click_pos = event.pos()
 
-    def mousePressEvent(self, event):
-        if event.button() == Qt.LeftButton:
-            click_pos = event.pos()
-
-            audio_pane = QRect(105, self.height() - 115, self.width() - 577, 85)
-            if audio_pane.contains(click_pos):
-                # Clicked on the audio_pane, play audio
-                self.audio.speak_text()
-
-        super().mousePressEvent(event)
 
     def timerEvent(self, event):
         if event.timerId() == self.timer:
