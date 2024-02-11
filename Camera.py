@@ -32,11 +32,13 @@ class Camera(QObject):
         self.audio = Audio(self)
         # initializing time 
         self.duration = 0 
-        self.audio_threshold = 5 * 60 # for 5 minutes
+        self.audio_threshold = 1 * 60 # for 5 minutes
         self.last_frametime = time.time() # initialize the last frame time
 
         # initializing the notification display
         self.notification_display = False 
+        # initializing the display in main window 
+        self.audio_holder = False 
 
     def start(self):
         self.running = True
@@ -59,10 +61,11 @@ class Camera(QObject):
 
                 # apply error handling
                 if landmarks_arr.shape != (126, ):
-                    # print("Align both hands in the camera")
+                    print("Align both hands in the camera")
                     if not self.notification_display:
                         self.show_notification("Missing both hands", "Align both hands in the camera")
                         self.notification_display = True
+                        self.audio_holder = False 
 
                 else:
                     # print(landmarks_arr.shape)
@@ -75,6 +78,7 @@ class Camera(QObject):
                     if classify > 0.5:
                         print("Correct position")
                         self.duration = 0 
+                        self.audio_holder = False 
                     else:
                         current_time = time.time()
                         time_elapsed = current_time - self.last_frametime
@@ -84,7 +88,8 @@ class Camera(QObject):
                         if self.duration >= self.audio_threshold:
                             self.audio.speak_text()
                             self.duration = 0 
-
+                            self.audio_holder = True 
+                        
                 # receive and process image data for display
                 h, w, ch = rgb_image.shape
                 bytes_per_line = ch * w

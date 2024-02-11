@@ -192,8 +192,12 @@ class MainWindow(QWidget):
         painter.drawRoundedRect(rect, 5, 5)
 
         # Audio
-        self.audio.audio_container(painter)
-        self.audio.audio_holder(painter)
+        if not self.camera.audio_holder:
+            self.audio.audio_container_correct(painter)
+            self.audio.audio_holder(painter)
+        else:
+            self.audio.audio_container_incorrect(painter)
+            self.audio.audio_holder(painter)
 
     """
         The mousePressEvent function can be 
@@ -228,7 +232,7 @@ class MainWindow(QWidget):
         self.update()
 
     def closeEvent(self, event):
-        # self.camera.stop()
+        self.camera.stop()
         event.accept()
 
     def set_break_time(self):

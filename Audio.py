@@ -1,32 +1,14 @@
-from PyQt5.QtGui import QColor, QPen, QFont, QPixmap
-from PyQt5.QtCore import Qt, QRect
+from PyQt5.QtGui import QColor, QFont, QPixmap
+from PyQt5.QtCore import Qt, QRect, QThread 
 from gtts import gTTS
 import pygame 
-import os
 
-class Audio:
-    def __init__(self, parent):
-        self.parent = parent
-        self.audio_placeholder = True
-
-    def audio_container(self, painter):
-        color = QColor("#E8E7E7")
-        painter.setBrush(color)
-        painter.setPen(color)
-        painter.setBrush(QColor("#E8E7E7"))
-        audio_pane = QRect(105, self.parent.height() - 115, self.parent.width() - 577, 85)
-        radius = 13
-        painter.drawRoundedRect(audio_pane, radius, radius)
-
-    def speak_text(self):
-        text_to_speak = "Prolonged incorrect wrist position! Correct your position immediately."
-        tts = gTTS(text=text_to_speak, lang='en')
-        tts.save("audio.mp3")
-       
+class AudioThread(QThread):
+    def run(self):
         # initialize pygame 
+        print("Loading audio file...")
         pygame.mixer.init()
 
-        print("Loading audio file...")
         loaded = pygame.mixer.music.load("audio.mp3")
         if loaded:
             print("Audio file loaded successfully.")
@@ -41,6 +23,20 @@ class Audio:
         # clean up resources
         pygame.mixer.quit()
 
+
+class Audio:
+    def __init__(self, parent):
+        self.parent = parent
+        self.audio_placeholder = True
+        self.audio_thread = AudioThread()
+
+
+    def speak_text(self):
+        text_to_speak = "Prolonged incorrect wrist position! Correct your position immediately."
+        tts = gTTS(text=text_to_speak, lang='en')
+        tts.save("audio.mp3")
+        self.audio_thread.start()
+       
     def audio_holder(self, painter):
         # small square (box of audio icon)
         image_audio = QPixmap("./images/audio_icon.png")
@@ -63,6 +59,26 @@ class Audio:
         painter.setPen(QColor("#303030"))
         painter.drawText(200, self.parent.height() - 85, 450, 270, Qt.AlignLeft,
                          "This section will play when prolonged incorrect position is detected.")
+
+    def audio_container_correct(self, painter):
+        color = QColor("#E8E7E7")
+        painter.setBrush(color)
+        painter.setPen(color)
+        painter.setBrush(QColor("#E8E7E7"))
+        audio_pane = QRect(105, self.parent.height() - 115, self.parent.width() - 577, 85)
+        radius = 13
+        painter.drawRoundedRect(audio_pane, radius, radius) 
+
+    def audio_container_incorrect(self, painter):
+        color = QColor("#FF8A8A")
+        painter.setBrush(color)
+        painter.setPen(color)
+        painter.setBrush(QColor("#FF8A8A"))
+        audio_pane = QRect(105, self.parent.height() - 115, self.parent.width() - 577, 85)
+        radius = 13
+        painter.drawRoundedRect(audio_pane, radius, radius)
+
+
 
     def update(self):
         self.parent.update()
