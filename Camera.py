@@ -39,7 +39,10 @@ class Camera(QObject):
         self.notification_display = False 
         # initializing the display in main window 
         self.audio_holder = False 
-
+        # initializing wrist position display in main waindow 
+        self.correct_position = True 
+        self.hands_detect = True
+    
     def start(self):
         self.running = True
         self.camera_thread.start()
@@ -66,10 +69,13 @@ class Camera(QObject):
                         self.show_notification("Missing both hands", "Align both hands in the camera")
                         self.notification_display = True
                         self.audio_holder = False 
+                        self.hands_detect = False 
 
                 else:
                     # print(landmarks_arr.shape)
                     # reshape to fit the model
+                    self.hands_detect = True 
+                    self.notification_display = False 
                     reshape_landmarks = landmarks_arr.reshape(1, 1, landmarks_arr.shape[0])
                     # feed into the data into the model
                     classify = self.model.predict(reshape_landmarks)
@@ -78,8 +84,11 @@ class Camera(QObject):
                     if classify > 0.5:
                         print("Correct position")
                         self.duration = 0 
-                        self.audio_holder = False 
-                    else:
+                        self.audio_holder = False  
+                        self.correct_position = True 
+                    
+                    else: 
+                        self.correct_position = False 
                         current_time = time.time()
                         time_elapsed = current_time - self.last_frametime
                         self.duration += time_elapsed
@@ -89,6 +98,7 @@ class Camera(QObject):
                             self.audio.speak_text()
                             self.duration = 0 
                             self.audio_holder = True 
+                        
                         
                 # receive and process image data for display
                 h, w, ch = rgb_image.shape

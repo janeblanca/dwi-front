@@ -173,8 +173,11 @@ class MainWindow(QWidget):
 
         # --- Wrist Position ---
         wristposition_section = WristPositionSection(painter, self.width(), self.height())
-        wristposition_section.paint_wristposition()
 
+        hands_detected = self.camera.hands_detect 
+        correct_position = self.camera.correct_position
+        wristposition_section.paint_wristposition(hands_detected, correct_position)
+        
         # --- Reminder Section ---
         reminder_section = ReminderSection(painter, self.width(), self.height())
         reminder_section.paint_reminder()
