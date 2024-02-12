@@ -16,7 +16,7 @@ class Camera(QObject):
 
     def __init__(self, cam_index = None):
         super().__init__()
-        self.camera = cv2.VideoCapture(cam_index if cam_index is not None else 0)
+        self.camera = cv2.VideoCapture(cam_index)
         # threading
         self.camera_thread = QThread()
         self.moveToThread(self.camera_thread)

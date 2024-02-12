@@ -34,7 +34,10 @@ class MainWindow(QWidget):
         self.camera_selection.setStyleSheet("background-color: #f3f1ec; border-radius: 3px;")
         self.camera_selection.setGeometry(1000, 300, 175, 25)
         self.camera_selection.addItem("Choose a camera") 
-        self.camera_selection.addItems(["Camera 1", "Camera 2"])
+        self.camera_selection.addItems(["Camera 1", "Camera 2", "Camera 3"])
+
+        # map the cameras to index 
+        self.camera_map = {"Camera 1": 0, "Camera 2": 1, "Camera 3": 2}
         self.camera_selection.currentIndexChanged.connect(self.select_camera)
 
         self.camera = Camera()
@@ -281,12 +284,13 @@ class MainWindow(QWidget):
     def select_camera(self, index):
         # Stop the current camera
         self.camera.stop()
-        # Initialize a new camera with the selected index
-        self.camera = Camera(index)
-        # Connect Camera Signal
-        self.camera.image_data.connect(self.update_camera_image)
-        # Start the new camera
-        self.camera.start()
+        # selecting the camera from the UI 
+        selected_cam = self.camera_selection.currentText()
+        index = self.camera_map.get(selected_cam, -1)
+        if index != -1:
+            self.camera = Camera(index)
+            self.camera.image_data.connect(self.update_camera_image)
+            self.camera.start()
 
     def update_camera_image(self, image):
         pixmap = QPixmap.fromImage(image)
