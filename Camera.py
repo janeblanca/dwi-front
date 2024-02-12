@@ -25,7 +25,7 @@ class Camera(QObject):
         # initializing mediapipe
         self.landmarks_detector = HandLandmarksDetector()
         # initialize model
-        self.model = tf.keras.models.load_model('C:/Users/DeLL/OneDrive/Documents/dwi-latest/model/lstm_4-new.h5')
+        self.model = tf.keras.models.load_model('model\lstm_4-new.h5')
         self.running = False
 
         # initializing audio 
