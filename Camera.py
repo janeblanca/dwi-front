@@ -1,58 +1,125 @@
-from PyQt5.QtGui import QColor, QPen, QFont, QPixmap, QImage
-from PyQt5.QtCore import Qt, QRect
 import cv2
 import numpy as np
+import tensorflow as tf
+import time
+import urllib.request
+import http
+from PyQt5.QtCore import pyqtSignal, QObject, QThread, QSize
+from PyQt5.QtGui import QImage
+from plyer import notification
+
 from FeatureExtraction import HandLandmarksDetector
+from Audio import Audio
 
+class Camera(QObject):
+    image_data = pyqtSignal(QImage)
 
-class Camera:
-    def __init__(self, parent):
-        self.parent = parent
-        self.camera = cv2.VideoCapture(1)
-        self.cam_placeholder = True
+    def __init__(self, camera_index=None):
+        super().__init__()
+        self.camera = cv2.VideoCapture(camera_index if camera_index is not None else 0)
+        self.camera_thread = QThread()
+        self.moveToThread(self.camera_thread)
+        self.camera_thread.started.connect(self.stream)
+        self.running = False
 
+        # initializing mediapipe
+        self.landmarks_detector = HandLandmarksDetector()
 
-    def cam_container(self, painter):
-        painter.setPen(QPen(Qt.white, 0.5))
-        color = QColor("#3A606E")
-        color.setAlpha(100)
-        painter.setBrush(color)
-        camera_square = QRect(self.parent.width() - 420, 330, 390, 350)
-        radius = 7
-        painter.drawRoundedRect(camera_square, radius, radius)
+        # initializing audio
+        self.audio = Audio(self)
 
-    def cam_draw(self, painter):
-        ret, frame = self.camera.read()
-        if ret:
-            # MediaPipe
-            landmarks_detector = HandLandmarksDetector()
-            frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            landmarks = landmarks_detector.extract_landmarks(frame)
+        # initializing time
+        self.duration = 0
+        self.audio_threshold = 1 * 60 # for 5 minutes
+        self.last_frametime = time.time() # initialize the last frame time
 
-            # Reshaping the extracted landmarks to fit into the model
-            landmarks_arr = np.array(landmarks)
-            print(landmarks_arr.shape)
-            # reshaped_landmarks = landmarks_arr.reshape((1, 1, landmarks_arr.shape[0]))
+        # initializing the notification display
+        self.notification_display = False
 
-            frame_with_landmarks = cv2.cvtColor(frame_rgb, cv2.COLOR_BGR2RGB)
-            h, w, ch = frame_with_landmarks.shape
-            bytes_per_line = ch * w
-            landmarks_image = QImage(frame_rgb.data, w, h, bytes_per_line, QImage.Format_RGB888)
-            dest_rect = QRect(790, 370, 370, 270)
-            painter.drawImage(dest_rect, landmarks_image.scaled(dest_rect.size(), Qt.KeepAspectRatio))
+        # initializing the display in main window
+        self.audio_holder = False
 
-    def cam_holder(self, painter):
-        image_cam = QPixmap("./images/cam.png")
-        image_cam_rect = QRect(self.parent.width() - 380, 380, 300, 210)
-        painter.drawPixmap(image_cam_rect, image_cam)
-        click_font = QFont()
-        click_font.setPointSize(9)
-        painter.setFont(click_font)
-        painter.setPen(QColor("#ffffff"))
-        painter.drawText(self.parent.width() - 445, 480, 450, 270, Qt.AlignCenter, "Click to set-up your camera")
+        # initializing wrist position display in main window
+        self.correct_position = True
+        self.hands_detect = True
 
-    def update(self):
-        self.parent.update()
+        # initialize model
+        self.model = tf.keras.models.load_model('./model/lstm_4-new.h5')
 
-    def release_camera(self):
-        self.camera.release()
+    def start(self):
+        self.running = True
+        self.camera_thread.start()
+
+    def stop(self):
+        self.running = False
+        self.camera_thread.quit()
+        self.camera_thread.wait()
+
+    def stream(self):
+        while self.running:
+            ret, frame = self.camera.read()
+            if ret:
+                rgb_image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                landmarks = self.landmarks_detector.extract_landmarks(frame)
+                landmarks_arr = np.array(landmarks)
+
+                if landmarks_arr.shape != (126, ):
+                    print("Align both hands in the camera")
+                    if not self.notification_display:
+                        self.show_notification("Missing both hands", "Align both hands in the camera")
+                        self.notification_display = True
+                        self.audio_holder = False
+                        self.hands_detect = False
+                        self.transfer("0")
+                else:
+                    self.hands_detect = True
+                    self.notification_display = False
+                    reshape_landmarks = landmarks_arr.reshape(1, 1, landmarks_arr.shape[0])
+                    classify = self.model.predict(reshape_landmarks)
+
+                    if classify > 0.5:
+                        print("Correct position")
+                        self.duration = 0
+                        self.audio_holder = False
+                        self.correct_position = True
+                        self.transfer("0")
+
+                    else:
+                        self.correct_position = False
+                        current_time = time.time()
+                        time_elapsed = current_time - self.last_frametime
+                        self.duration += time_elapsed
+                        self.last_frametime = current_time
+                        self.transfer("1")
+
+                        if self.duration >= self.audio_threshold:
+                            self.audio.speak_text()
+                            self.duration = 0
+                            self.audio_holder = True
+
+                h, w, ch = rgb_image.shape
+                bytes_per_line = ch * w
+                qt_image = QImage(rgb_image.data, w, h, bytes_per_line, QImage.Format_RGB888)
+                self.image_data.emit(qt_image)
+
+    def transfer(self, data1):
+        try:
+            #n = urllib.request.urlopen("http://192.168.100.82/" + data1).read()
+            n = urllib.request.urlopen("http://192.168.158.19/" + data1).read()
+            n = n.decode("utf-8")
+            return n
+        except http.client.HTTPException as e:
+            return e
+
+    def get_frame_size(self):
+        width = int(self.camera.get(cv2.CAP_PROP_FRAME_WIDTH))
+        height = int(self.camera.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        return QSize(width, height)
+
+    def show_notification(self, title, message):
+        notification.notify(
+            title=title,
+            message=message,
+            app_name="Don't Wrist It",
+            timeout=10
+        )
