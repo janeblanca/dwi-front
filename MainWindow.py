@@ -1,7 +1,6 @@
-import sys
-from PyQt5.QtCore import Qt, QRect
-from PyQt5.QtWidgets import QWidget, QApplication, QLineEdit, QScrollArea, QVBoxLayout, QLabel, QComboBox
-from PyQt5.QtGui import QPainter, QColor, QPen, QFont, QPixmap, QIntValidator
+from PyQt5.QtCore import Qt, QRect, QEvent
+from PyQt5.QtWidgets import QWidget, QApplication, QLineEdit, QScrollArea, QVBoxLayout, QLabel, QComboBox, QSystemTrayIcon, QMenu, QAction, QPushButton, QMainWindow
+from PyQt5.QtGui import QPainter, QColor, QPen, QFont, QPixmap, QIntValidator, QIcon
 from plyer import notification
 
 from Worktime import WorktimeSection
@@ -13,11 +12,16 @@ from TimeInput import InputTime
 from ReminderMessage import ReminderWidget
 from Audio import Audio
 from Camera import Camera
+import sys
 
 
 class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
+        self.pushButton = QPushButton()
+        self.pushButton.clicked.connect(lambda: self.show_hide())
+        #self.pushButton_2.clicked.connect(lambda: self.showFullScreen())
+        #self.pushButton_3.clicked.connect(lambda: self.showMinimized())
 
         # Set up main window
         self.main_window()
@@ -99,7 +103,14 @@ class MainWindow(QWidget):
 
         # Audio
         self.audio = Audio(self)
-
+    
+    def show_hide(self):
+        if self.isVisible():
+            action_show_hide.setText("Show Window")
+            self.hide()
+        else:
+            action_show_hide.setText("Hide Window")
+            self.showNormal()
 
     def main_window(self):
         self.setWindowTitle("Don't Wrist It")
@@ -211,15 +222,6 @@ class MainWindow(QWidget):
             self.audio.audio_container_incorrect(painter)
             self.audio.audio_holder(painter)
 
-    """
-        The mousePressEvent function can be 
-        used when selecting camera 
-    """
-    # def mousePressEvent(self, event):
-    #     if event.button() == Qt.LeftButton:
-    #         click_pos = event.pos()
-
-
     def timerEvent(self, event):
         if event.timerId() == self.timer:
             if self.break_interval_active:
@@ -297,9 +299,38 @@ class MainWindow(QWidget):
         pixmap = QPixmap.fromImage(image)
         self.camera_label.setPixmap(pixmap.scaled(self.camera_label.size(), Qt.KeepAspectRatio))
 
+    def changeEvent(self, event):
+        if event.type() == QEvent.WindowStateChange:
+            if self.isMinimized():
+                self.hide()
+                event.ignore()
+            else:
+                self.show()
+        super().changeEvent(event)
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
+    app.setQuitOnLastWindowClosed(False)
+
+    #Setting System Tray Icon
+    tray = QSystemTrayIcon(QIcon(u"./images/logo.png"))
+    menu = QMenu()
+
+    #Show and Hide Application
+    action_show_hide = QAction("Hide Window")
+    action_show_hide.triggered.connect(lambda: window.show_hide())
+    menu.addAction(action_show_hide)
+
+    #Full Exit
+    Exit = QAction("Exit")
+    Exit.triggered.connect(lambda: app.exit())
+    menu.addAction(Exit)
+
+    #Setting ToolTips, Context Menu & Show Tray Icon
+    tray.setToolTip("Don't Wrist It")
+    tray.setContextMenu(menu)
+    tray.show()
+
     window = MainWindow()
     window.show()
     sys.exit(app.exec_())
