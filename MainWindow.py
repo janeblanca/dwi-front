@@ -282,8 +282,9 @@ class MainWindow(QWidget):
         )
 
     def select_camera(self, index):
-        # Stop the current camera
-        self.camera.stop()
+        if hasattr(self, 'camera'):
+            self.camera.stop()
+
         # selecting the camera from the UI 
         selected_cam = self.camera_selection.currentText()
         index = self.camera_map.get(selected_cam, -1)
