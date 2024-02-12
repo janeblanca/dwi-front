@@ -1,6 +1,6 @@
 import sys
 from PyQt5.QtCore import Qt, QRect
-from PyQt5.QtWidgets import QWidget, QApplication, QLineEdit, QScrollArea, QVBoxLayout, QLabel
+from PyQt5.QtWidgets import QWidget, QApplication, QLineEdit, QScrollArea, QVBoxLayout, QLabel, QComboBox
 from PyQt5.QtGui import QPainter, QColor, QPen, QFont, QPixmap, QIntValidator
 from plyer import notification
 
@@ -30,12 +30,21 @@ class MainWindow(QWidget):
         self.camera_label.setGeometry(self.width() - 425, 355, 400, 300)
         self.camera_label.setStyleSheet("background-color: #AAAE8E;")
 
+        self.camera_selection = QComboBox(self)
+        self.camera_selection.setStyleSheet("background-color: #f3f1ec; border-radius: 3px;")
+        self.camera_selection.setGeometry(1000, 300, 175, 25)
+        self.camera_selection.addItem("Choose a camera") 
+        self.camera_selection.addItems(["Camera 1", "Camera 2", "Camera 3"])
+
+        # map the cameras to index 
+        self.camera_map = {"Camera 1": 0, "Camera 2": 1, "Camera 3": 2}
+        self.camera_selection.currentIndexChanged.connect(self.select_camera)
+
         self.camera = Camera()
         self.camera.image_data.connect(self.update_camera_image)
 
         # start camera
         self.camera.start()
-
 
         # calling the class for the time inputs
         # Time Input
@@ -173,8 +182,11 @@ class MainWindow(QWidget):
 
         # --- Wrist Position ---
         wristposition_section = WristPositionSection(painter, self.width(), self.height())
-        wristposition_section.paint_wristposition()
 
+        hands_detected = self.camera.hands_detect 
+        correct_position = self.camera.correct_position
+        wristposition_section.paint_wristposition(hands_detected, correct_position)
+        
         # --- Reminder Section ---
         reminder_section = ReminderSection(painter, self.width(), self.height())
         reminder_section.paint_reminder()
@@ -268,6 +280,18 @@ class MainWindow(QWidget):
         self.notification_scroll_area.verticalScrollBar().setValue(
             self.notification_scroll_area.verticalScrollBar().maximum()
         )
+
+    def select_camera(self, index):
+        if hasattr(self, 'camera'):
+            self.camera.stop()
+
+        # selecting the camera from the UI 
+        selected_cam = self.camera_selection.currentText()
+        index = self.camera_map.get(selected_cam, -1)
+        if index != -1:
+            self.camera = Camera(index)
+            self.camera.image_data.connect(self.update_camera_image)
+            self.camera.start()
 
     def update_camera_image(self, image):
         pixmap = QPixmap.fromImage(image)
