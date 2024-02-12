@@ -246,7 +246,9 @@ class MainWindow(QWidget):
         self.update()
 
     def closeEvent(self, event):
-        self.camera.stop()
+        #self.camera.stop()
+        window.hide()
+        action_show_hide.setText("Show Window")
         event.accept()
 
     def set_break_time(self):
