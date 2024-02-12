@@ -211,15 +211,6 @@ class MainWindow(QWidget):
             self.audio.audio_container_incorrect(painter)
             self.audio.audio_holder(painter)
 
-    """
-        The mousePressEvent function can be 
-        used when selecting camera 
-    """
-    # def mousePressEvent(self, event):
-    #     if event.button() == Qt.LeftButton:
-    #         click_pos = event.pos()
-
-
     def timerEvent(self, event):
         if event.timerId() == self.timer:
             if self.break_interval_active:
@@ -296,7 +287,6 @@ class MainWindow(QWidget):
     def update_camera_image(self, image):
         pixmap = QPixmap.fromImage(image)
         self.camera_label.setPixmap(pixmap.scaled(self.camera_label.size(), Qt.KeepAspectRatio))
-
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
