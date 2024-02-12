@@ -64,7 +64,6 @@ class Camera(QObject):
 
                 # apply error handling
                 if landmarks_arr.shape != (126, ):
-                    print("Align both hands in the camera")
                     if not self.notification_display:
                         self.show_notification("Missing both hands", "Align both hands in the camera")
                         self.notification_display = True
@@ -82,7 +81,6 @@ class Camera(QObject):
 
                     # classifying
                     if classify > 0.5:
-                        print("Correct position")
                         self.duration = 0 
                         self.audio_holder = False  
                         self.correct_position = True 

@@ -1,5 +1,5 @@
 from PyQt5.QtCore import Qt, QRect, QEvent
-from PyQt5.QtWidgets import QWidget, QApplication, QLineEdit, QScrollArea, QVBoxLayout, QLabel, QComboBox, QSystemTrayIcon, QMenu, QAction, QPushButton, QMainWindow
+from PyQt5.QtWidgets import QWidget, QApplication, QLineEdit, QScrollArea, QVBoxLayout, QLabel, QComboBox, QSystemTrayIcon, QMenu, QAction, QPushButton
 from PyQt5.QtGui import QPainter, QColor, QPen, QFont, QPixmap, QIntValidator, QIcon
 from plyer import notification
 
@@ -20,8 +20,6 @@ class MainWindow(QWidget):
         super().__init__()
         self.pushButton = QPushButton()
         self.pushButton.clicked.connect(lambda: self.show_hide())
-        #self.pushButton_2.clicked.connect(lambda: self.showFullScreen())
-        #self.pushButton_3.clicked.connect(lambda: self.showMinimized())
 
         # Set up main window
         self.main_window()
@@ -29,29 +27,36 @@ class MainWindow(QWidget):
         # Disable maximized window
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowMaximizeButtonHint)
 
-        # Camera
+        """
+            Initializing camera styles
+        """
         self.camera_label = QLabel(self)
         self.camera_label.setGeometry(self.width() - 425, 355, 400, 300)
         self.camera_label.setStyleSheet("background-color: #AAAE8E;")
 
+        # Dropdown box for choosing camera 
         self.camera_selection = QComboBox(self)
         self.camera_selection.setStyleSheet("background-color: #f3f1ec; border-radius: 3px;")
         self.camera_selection.setGeometry(1000, 300, 175, 25)
         self.camera_selection.addItem("Choose a camera") 
         self.camera_selection.addItems(["Camera 1", "Camera 2", "Camera 3"])
 
-        # map the cameras to index 
+        # Map the cameras to index 
         self.camera_map = {"Camera 1": 0, "Camera 2": 1, "Camera 3": 2}
         self.camera_selection.currentIndexChanged.connect(self.select_camera)
 
+        # Calling the camera class 
         self.camera = Camera()
         self.camera.image_data.connect(self.update_camera_image)
 
-        # start camera
+        # Start camera
         self.camera.start()
 
-        # calling the class for the time inputs
-        # Time Input
+        """
+            Initializing time inputs for break time 
+            and break interval 
+        """
+        # Time Input Class 
         self.break_handler = InputTime(self)
         self.timer = self.startTimer(1000)
 
@@ -83,6 +88,10 @@ class MainWindow(QWidget):
         self.set_break_interval()
         self.start_timer()
 
+        """ This section is for notification functionalities
+            of the software 
+        """
+
         # Store Notification message
         self.notification_message = ""
         self.notification_container = False
@@ -101,9 +110,14 @@ class MainWindow(QWidget):
         self.notification_layout.setAlignment(Qt.AlignTop)
         self.notification_layout.setSpacing(10)
 
-        # Audio
+        # Audio initialization 
         self.audio = Audio(self)
     
+    """
+        This function is responsible for showing and hiding 
+        the window. This is is necessary because of the background 
+        running feature of the software. 
+    """
     def show_hide(self):
         if self.isVisible():
             action_show_hide.setText("Show Window")
@@ -111,6 +125,10 @@ class MainWindow(QWidget):
         else:
             action_show_hide.setText("Hide Window")
             self.showNormal()
+
+    """
+        This function is for the mainwindow 
+    """
 
     def main_window(self):
         self.setWindowTitle("Don't Wrist It")
@@ -193,7 +211,8 @@ class MainWindow(QWidget):
 
         # --- Wrist Position ---
         wristposition_section = WristPositionSection(painter, self.width(), self.height())
-
+        
+        # Displaying correct and incorrect positions of the hands 
         hands_detected = self.camera.hands_detect 
         correct_position = self.camera.correct_position
         wristposition_section.paint_wristposition(hands_detected, correct_position)
@@ -202,7 +221,7 @@ class MainWindow(QWidget):
         reminder_section = ReminderSection(painter, self.width(), self.height())
         reminder_section.paint_reminder()
 
-        # Camera
+        # --- Camera Section ---
         font_desc = QFont()
         font_desc.setPointSize(10)
         painter.setFont(font_desc)
@@ -214,13 +233,18 @@ class MainWindow(QWidget):
         painter.setBrush(QColor("#AAAE8E"))
         painter.drawRoundedRect(rect, 5, 5)
 
-        # Audio
+        # If the user is incorrect for 5 minutes, the holder will have different color 
         if not self.camera.audio_holder:
             self.audio.audio_container_correct(painter)
             self.audio.audio_holder(painter)
         else:
             self.audio.audio_container_incorrect(painter)
             self.audio.audio_holder(painter)
+
+    """
+        This function is responsible for break time and
+        break interval counter, and total work time  
+    """
 
     def timerEvent(self, event):
         if event.timerId() == self.timer:
