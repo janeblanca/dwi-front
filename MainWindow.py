@@ -1,6 +1,6 @@
 import sys
 from PyQt5.QtCore import Qt, QRect
-from PyQt5.QtWidgets import QWidget, QApplication, QLineEdit, QScrollArea, QVBoxLayout, QLabel
+from PyQt5.QtWidgets import QWidget, QApplication, QLineEdit, QScrollArea, QVBoxLayout, QLabel, QComboBox
 from PyQt5.QtGui import QPainter, QColor, QPen, QFont, QPixmap, QIntValidator
 from plyer import notification
 
@@ -30,12 +30,18 @@ class MainWindow(QWidget):
         self.camera_label.setGeometry(self.width() - 425, 355, 400, 300)
         self.camera_label.setStyleSheet("background-color: #AAAE8E;")
 
+        self.camera_selection = QComboBox(self)
+        self.camera_selection.setStyleSheet("background-color: #f3f1ec; border-radius: 3px;")
+        self.camera_selection.setGeometry(1000, 300, 175, 25)
+        self.camera_selection.addItem("Choose a camera") 
+        self.camera_selection.addItems(["Camera 1", "Camera 2"])
+        self.camera_selection.currentIndexChanged.connect(self.select_camera)
+
         self.camera = Camera()
         self.camera.image_data.connect(self.update_camera_image)
 
         # start camera
         self.camera.start()
-
 
         # calling the class for the time inputs
         # Time Input
@@ -271,6 +277,16 @@ class MainWindow(QWidget):
         self.notification_scroll_area.verticalScrollBar().setValue(
             self.notification_scroll_area.verticalScrollBar().maximum()
         )
+
+    def select_camera(self, index):
+        # Stop the current camera
+        self.camera.stop()
+        # Initialize a new camera with the selected index
+        self.camera = Camera(index)
+        # Connect Camera Signal
+        self.camera.image_data.connect(self.update_camera_image)
+        # Start the new camera
+        self.camera.start()
 
     def update_camera_image(self, image):
         pixmap = QPixmap.fromImage(image)
