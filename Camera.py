@@ -3,8 +3,13 @@ import numpy as np
 import tensorflow as tf
 from PyQt5.QtCore import pyqtSignal, QObject, QThread, QSize
 from PyQt5.QtGui import QImage
-import time 
+import time
 from plyer import notification
+import urllib.request
+import http
+import time
+#import asyncio
+
 
 from FeatureExtraction import HandLandmarksDetector
 from Audio import Audio 
@@ -42,6 +47,8 @@ class Camera(QObject):
         # initializing wrist position display in main waindow 
         self.correct_position = True 
         self.hands_detect = True
+        # initializing notification counter
+        self.notification_counter = 0
     
     def start(self):
         self.running = True
@@ -53,6 +60,7 @@ class Camera(QObject):
         self.camera_thread.wait()
 
     def stream(self):
+        notification_counter = 0
         while self.running:
             ret, frame = self.camera.read()
             if ret:
@@ -63,12 +71,17 @@ class Camera(QObject):
                 landmarks_arr = np.array(landmarks)
 
                 # apply error handling
+
                 if landmarks_arr.shape != (126, ):
-                    if not self.notification_display:
+                    print("Align both hands in the camera")
+                    #self.transfer("0")
+                    notification_counter += 1
+                    if notification_counter % 500 == 0:
                         self.show_notification("Missing both hands", "Align both hands in the camera")
-                        self.notification_display = True
-                        self.audio_holder = False 
-                        self.hands_detect = False 
+                    
+                    self.notification_display = True
+                    self.audio_holder = False 
+                    self.hands_detect = False
 
                 else:
                     # print(landmarks_arr.shape)
@@ -81,29 +94,32 @@ class Camera(QObject):
 
                     # classifying
                     if classify > 0.5:
-                        self.duration = 0 
-                        self.audio_holder = False  
-                        self.correct_position = True 
+                        print("Correct position")
+                        #self.transfer("0")
+                        self.duration = 0
+                        self.audio_holder = False
+                        self.correct_position = True
                     
                     else: 
-                        self.correct_position = False 
+                        self.correct_position = False
+                        #self.transfer("1")
                         current_time = time.time()
                         time_elapsed = current_time - self.last_frametime
                         self.duration += time_elapsed
                         self.last_frametime = current_time
-                        
+
+
                         if self.duration >= self.audio_threshold:
                             self.audio.speak_text()
-                            self.duration = 0 
-                            self.audio_holder = True 
-                        
-                        
+                            self.duration = 0
+                            self.audio_holder = True
+
+
                 # receive and process image data for display
                 h, w, ch = rgb_image.shape
                 bytes_per_line = ch * w
                 qt_image = QImage(rgb_image.data, w, h, bytes_per_line, QImage.Format_RGB888)
                 self.image_data.emit(qt_image)
-
     def get_frame_size(self):
         width = int(self.camera.get(cv2.CAP_PROP_FRAME_WIDTH))
         height = int(self.camera.get(cv2.CAP_PROP_FRAME_HEIGHT))
@@ -116,3 +132,11 @@ class Camera(QObject):
             app_name="Don't Wrist It",
             timeout=10
         )
+
+"""    def transfer(self, data1):
+        try:
+            n = urllib.request.urlopen("http://192.168.158.19/" + data1).read()
+            n = n.decode("utf-8")
+            return n
+        except http.client.HTTPException as e:
+            return e """
