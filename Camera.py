@@ -8,6 +8,7 @@ from plyer import notification
 import urllib.request
 import http
 import time
+import threading
 #import asyncio
 
 
@@ -30,14 +31,14 @@ class Camera(QObject):
         # initializing mediapipe
         self.landmarks_detector = HandLandmarksDetector()
         # initialize model
-        self.model = tf.keras.models.load_model('model\lstm_4-new.h5')
+        self.model = tf.keras.models.load_model('model\lstm_5-new.h5')
         self.running = False
 
         # initializing audio 
         self.audio = Audio(self)
         # initializing time 
         self.duration = 0 
-        self.audio_threshold = 1 * 60 # for 5 minutes
+        self.audio_threshold = 2 * 60 # for 5 minutes
         self.last_frametime = time.time() # initialize the last frame time
 
         # initializing the notification display
@@ -73,7 +74,6 @@ class Camera(QObject):
                 # apply error handling
 
                 if landmarks_arr.shape != (126, ):
-                    print("Align both hands in the camera")
                     #self.transfer("0")
                     notification_counter += 1
                     if notification_counter % 500 == 0:
@@ -133,10 +133,14 @@ class Camera(QObject):
             timeout=10
         )
 
-"""    def transfer(self, data1):
-        try:
-            n = urllib.request.urlopen("http://192.168.158.19/" + data1).read()
-            n = n.decode("utf-8")
-            return n
-        except http.client.HTTPException as e:
-            return e """
+    def transfer(self, data1):
+        def send_request():
+            try:
+                n = urllib.request.urlopen("http://192.168.158.19/" + data1).read()
+                n = n.decode("utf-8")
+                
+            except http.client.HTTPException as e:
+                pass 
+
+        # Start a new thread for sending the request
+        threading.Thread(target=send_request).start()
